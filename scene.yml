@@ -1,0 +1,32 @@
+camera:
+  look_from: { x: -2.0, y: 0.2, z: 0.5 }
+  look_at: { x: -0.5, y: 0.0, z: -1.0 }
+  up: { x: 0.0, y: 1.0, z: 0.0 }
+  focus_distance: 2.0
+  aperture: 0.001
+  fov: 40.0
+bounces: 100
+samples: 100
+world:
+  - center: { x: 0.0, y: -100.5, z: -1.0 }
+    radius: 100.0
+    material:
+      type: Lambert
+      albedo: { x: 0.1, y: 0.5, z: 1.0 }
+  - center: { x: 1.0, y: 0.0, z: -1.0 }
+    radius: 0.5
+    material:
+      type: Metal
+      albedo: { x: 0.98, y: 1.0, z: 0.95 }
+      fuzz: 0.01
+  - center: { x: 0.0, y: 0.0, z: -1.0 }
+    radius: 0.5
+    material:
+      type: Lambert
+      albedo: { x: 0.8, y: 0.4, z: 1.0 }
+  - center: { x: -1.0, y: 0.0, z: -1.0 }
+    radius: 0.5
+    material:
+      type: Dielectric
+      transmittance: { x: 0.95, y: 1.0, z: 0.98 }
+      ior: 1.5
