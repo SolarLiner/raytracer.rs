@@ -1,6 +1,6 @@
 use crate::material::Material;
 use crate::ray::Ray;
-use cgmath::{InnerSpace, Point3, Vector3};
+use cgmath::{InnerSpace, Point3, Vector3, Array};
 
 #[derive(Copy, Clone, Debug)]
 pub struct HitRecord {
@@ -40,6 +40,9 @@ impl<T: Hittable> Hittable for Vec<T> {
     fn hit(&self, ray: &Ray, tmin: f64, tmax: f64) -> Option<HitRecord> {
         self.iter()
             .filter_map(|obj| obj.hit(ray, tmin, tmax))
-            .min_by(|a, b| a.t.partial_cmp(&b.t).unwrap())
+            .filter(|h| h.t.is_finite())
+            .min_by(|a, b| {
+                a.t.partial_cmp(&b.t).unwrap()
+            })
     }
 }

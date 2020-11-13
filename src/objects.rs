@@ -1,15 +1,40 @@
 use crate::material::Material;
 use crate::ray::Ray;
 use crate::traits::{HitRecord, Hittable};
-use crate::P3;
-use cgmath::{Array, InnerSpace, Point3, Vector3};
-use serde::Deserialize;
+use crate::{P3, config};
+use cgmath::{InnerSpace, Vector3};
 
-#[derive(Copy, Clone, Debug, Deserialize)]
+
+
+#[derive(Copy, Clone, Debug,)]
 pub struct Sphere {
     pub(crate) center: P3,
     pub(crate) radius: f64,
     pub(crate) material: Material,
+}
+
+impl From<config::Object> for Sphere {
+    fn from(o: config::Object) -> Self {
+        use config::Object::*;
+        match o {
+            Sphere {pos, radius, material} => Self {
+                center: pos.into(),
+                radius,
+                material: material.into(),
+            },
+            _ => todo!()
+        }
+    }
+}
+
+impl From<Sphere> for config::Object {
+    fn from(s: Sphere) -> Self {
+        Self::Sphere {
+            pos: s.center.into(),
+            radius: s.radius,
+            material: s.material.into(),
+        }
+    }
 }
 
 impl Hittable for Sphere {

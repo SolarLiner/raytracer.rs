@@ -1,18 +1,69 @@
+use cgmath::InnerSpace;
+use rand::{thread_rng, Rng};
+
 use crate::ray::Ray;
 use crate::traits::HitRecord;
 use crate::utils::random_vector;
-use crate::Color;
 use crate::V3;
-use cgmath::InnerSpace;
-use rand::{thread_rng, Rng};
-use serde::Deserialize;
+use crate::{config, Color};
 
-#[derive(Copy, Clone, Debug, Deserialize)]
-#[serde(tag = "type")]
+#[derive(Copy, Clone, Debug)]
 pub enum Material {
     Lambert { albedo: Color },
     Metal { albedo: Color, fuzz: f64 },
     Dielectric { transmittance: Color, ior: f64 },
+}
+
+impl From<config::Material> for Material {
+    fn from(m: config::Material) -> Self {
+        use config::Material::*;
+        match m {
+            Lambert {
+                albedo: config::ColorInput::Color { color },
+            } => Self::Lambert {
+                albedo: color.into(),
+            },
+            Metal {
+                fuzz,
+                albedo: config::ColorInput::Color { color },
+            } => Self::Metal {
+                albedo: color.into(),
+                fuzz,
+            },
+            Dielectric {
+                ior,
+                albedo: config::ColorInput::Color { color },
+            } => Self::Dielectric {
+                transmittance: color.into(),
+                ior,
+            },
+            _ => todo!(),
+        }
+    }
+}
+
+impl From<Material> for config::Material {
+    fn from(m: Material) -> Self {
+        match m {
+            Material::Lambert { albedo } => Self::Lambert {
+                albedo: config::ColorInput::Color {
+                    color: albedo.into(),
+                },
+            },
+            Material::Metal { albedo, fuzz } => Self::Metal {
+                albedo: config::ColorInput::Color {
+                    color: albedo.into(),
+                },
+                fuzz,
+            },
+            Material::Dielectric { transmittance, ior } => Self::Dielectric {
+                albedo: config::ColorInput::Color {
+                    color: transmittance.into(),
+                },
+                ior,
+            },
+        }
+    }
 }
 
 #[derive(Copy, Clone, Debug)]
@@ -48,7 +99,7 @@ impl Material {
                 let rratio = if hit.front_face { 1.0 / ior } else { ior };
                 let dir = ray.dir().normalize();
                 let cos_theta = (-dir).dot(hit.normal).min(1.0);
-                let sin_theta = (1.0 - cos_theta*cos_theta).sqrt();
+                let sin_theta = (1.0 - cos_theta * cos_theta).sqrt();
                 let cannot_refract = rratio * sin_theta > 1.0;
                 let refl = reflectance(cos_theta, rratio);
                 let new_dir = if cannot_refract || refl > rng.sample(distr) {
@@ -80,6 +131,6 @@ fn refract(uv: V3, n: V3, etai_over_etat: f64) -> V3 {
 
 fn reflectance(cosine: f64, idx: f64) -> f64 {
     let r0 = (1.0 - idx) / (1.0 + idx);
-    let r0 = r0*r0;
-    r0 + (1.0 - r0) * (1.0-cosine).powi(5)
+    let r0 = r0 * r0;
+    r0 + (1.0 - r0) * (1.0 - cosine).powi(5)
 }

@@ -1,9 +1,9 @@
-use cgmath::{ElementWise, EuclideanSpace, InnerSpace, Vector2};
+use cgmath::{EuclideanSpace, InnerSpace};
 
 use crate::ray::Ray;
-use crate::{P3, V3};
+use crate::{P3, V3, config};
 use rand::prelude::ThreadRng;
-use serde::Deserialize;
+
 
 #[derive(Clone, Debug)]
 pub struct Camera {
@@ -31,7 +31,36 @@ impl Default for Camera {
     }
 }
 
+impl From<Camera> for config::Camera {
+    fn from(c: Camera) -> Self {
+        // lower_left_corner = origin - horizontal / 2.0 - vertical / 2.0 - focus_dist * w,
+        // focus_dist * w + lower_left_corner = origin - horizontal / 2.0 - vertical / 2.0
+        // focus_dist * w = origin - horizontal / 2.0 - vertical / 2.0 - lower_left_corner
+        let fw: crate::V3 = c.origin - c.horizontal / 2.0 - c.vertical / 2.0 - c.lower_left_corner;
+        let focus_dist = fw.magnitude();
+        // vertical = focus_dist * (viewport_height = 2.0 * (h = tan(theta / 2)) * v;
+        // vertical / focus_dist / 2.0 = tan(theta/2) * v;
+        let tanv: crate::V3 = c.vertical / (focus_dist * 2.0);
+        let ttheta_over_2 = tanv.magnitude();
+        let fov = ttheta_over_2.atan().to_degrees();
+
+        Self {
+            pos: c.origin.into(),
+            look_at: (c.w * focus_dist).into(),
+            up: c.u.into(),
+            focus_distance: Some(focus_dist),
+            fov,
+            aperture: c.lens_radius * 2.0,
+        }
+    }
+}
+
 impl Camera {
+    pub fn from_config(c: config::Camera, aspect_ratio: f64) -> Self {
+        let look_from = c.pos.into();
+        let look_at = c.look_at.into();
+        Self::new(look_from, look_at, c.up.into(), aspect_ratio, c.fov, c.aperture, c.focus_distance.unwrap_or_else(|| (look_at-look_from).magnitude()))
+    }
     pub fn new(
         look_from: P3,
         look_at: P3,
@@ -75,14 +104,4 @@ impl Camera {
             self.lower_left_corner + s * self.horizontal + t * self.vertical - self.origin - offset,
         )
     }
-}
-
-#[derive(Copy, Clone, Debug, Deserialize)]
-pub struct CameraParameters {
-    pub look_from: P3,
-    pub look_at: P3,
-    pub up: V3,
-    pub fov: f64,
-    pub aperture: f64,
-    pub focus_distance: f64,
 }

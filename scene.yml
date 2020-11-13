@@ -1,38 +1,48 @@
 camera:
-  look_from: { x: -2.5, y: 0.0, z: 0.5 }
-  look_at: { x: -0.5, y: 0.0, z: -1.0 }
-  up: { x: 0.0, y: 1.0, z: 0.0 }
+  pos: [ -2.5, 0.0, 0.5 ]
+  look_at: [ -0.5, 0.0, -1.0 ]
+  up: [ 0.0, 1.0, 0.0 ]
   focus_distance: 3.0
-  aperture: 0.1
+  aperture: 0.0
   fov: 45.0
 bounces: 5
-samples: 500
+samples: 10
 world:
-  - center: { x: 0.0, y: -100.5, z: -1.0 }
+  - type: Sphere
+    pos: [ 0.0, -100.5, -1.0 ]
     radius: 100.0
     material:
       type: Lambert
-      albedo: { x: 0.1, y: 0.5, z: 1.0 }
-  - center: { x: 1.0, y: 0.0, z: -1.0 }
+      albedo:
+        color: [ 0.1, 0.5, 1.0 ]
+  - type: Sphere
+    pos: [ 1.0, 0.0, -1.0 ]
     radius: 0.5
     material:
       type: Metal
-      albedo: { x: 0.98, y: 1.0, z: 0.95 }
+      albedo:
+        color: [ 0.98, 1.0, 0.95 ]
       fuzz: 0.01
-  - center: { x: 0.0, y: 0.0, z: -1.0 }
+  - type: Sphere
+    pos: [ 0.0, 0.0, -1.0 ]
     radius: 0.5
     material:
       type: Lambert
-      albedo: { x: 0.8, y: 0.4, z: 1.0 }
-  - center: { x: -1.0, y: 0.0, z: -1.0 }
+      albedo:
+        color: [ 0.8, 0.4, 1.0 ]
+  - type: Sphere
+    pos: [ -1.0, 0.0, -1.0 ]
     radius: 0.5
     material:
       type: Dielectric
-      transmittance: { x: 0.95, y: 1.0, z: 0.98 }
+      albedo:
+        color: [ 0.5, 0.8, 1.0 ]
       ior: 1.5
-  - center: { x: -1.0, y: 0.0, z: -1.0 }
-    radius: 0.495
+  - type: Sphere
+    pos: [ -1.0, 0.0, -1.0 ]
+    radius: 0.492
     material:
       type: Dielectric
-      transmittance: { x: 0.95, y: 1.0, z: 0.98 }
+      albedo:
+        color: [ 0.95, 1.0, 0.98 ]
       ior: 0.6666666666666666666666666666666666

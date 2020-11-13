@@ -1,40 +1,67 @@
-use cgmath::{ElementWise, InnerSpace, Zero};
+use cgmath::{ElementWise, Zero};
 use rand::{prelude::*, thread_rng, Rng};
 use rayon::prelude::*;
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 
-use crate::{
-    camera::{Camera, CameraParameters},
-    material::Bounce,
-    ray::Ray,
-    sky::Sky,
-    traits::Hittable,
-    Color, V3,
-};
 
-#[derive(Copy, Clone, Debug, Deserialize)]
+use crate::{camera::{Camera}, material::Bounce, ray::Ray, sky::Sky, traits::Hittable, Color, config};
+
+#[derive(Clone, Debug)]
 pub struct Scene<W> {
     pub samples: u32,
     pub bounces: u32,
-    pub camera: CameraParameters,
+    pub camera: config::Camera,
     pub world: W,
-    #[serde(default)]
     pub sky: Sky,
+}
+
+impl<'de, H, W: Deserialize<'de> + Into<H>> From<config::Scene<W>> for Scene<H> {
+    fn from(s: config::Scene<W>) -> Self {
+        Self {
+            samples: s.samples,
+            bounces: s.bounces,
+            camera: s.camera,
+            world: s.world.into(),
+            sky: Sky,
+        }
+    }
+}
+
+impl<H: Into<W>, W: Serialize> From<Scene<H>> for config::Scene<W> {
+    fn from(scn: Scene<H>) -> Self {
+        Self {
+            bounces: scn.bounces,
+            samples: scn.samples,
+            world: scn.world.into(),
+            camera: scn.camera.into(),
+        }
+    }
+}
+
+impl<W> Scene<W> {
+    pub fn map_world<U, F: FnOnce(W) -> U>(self, map: F) -> Scene<U> {
+        let Self {
+            bounces,
+            samples,
+            world,
+            camera,
+            sky,
+        } = self;
+        Scene {
+            bounces,
+            samples,
+            world: map(world),
+            camera,
+            sky,
+        }
+    }
 }
 
 impl<W: 'static + Hittable + Send> Scene<W> {
     pub fn run(self, width: u32, height: u32) -> impl Iterator<Item = Vec<Color>> {
         let distr = rand::distributions::Uniform::new(0.0, 1.0);
         let (tx, rx) = crossbeam::channel::unbounded::<Vec<Color>>();
-        let cam = Camera::new(
-            self.camera.look_from,
-            self.camera.look_at,
-            self.camera.up,
-            width as f64 / height as f64,
-            self.camera.fov,
-            self.camera.aperture,
-            self.camera.focus_distance,
-        );
+        let cam = Camera::from_config(self.camera, width as f64 / height as f64);
 
         std::thread::spawn(move || {
             for j in (0..height).rev() {

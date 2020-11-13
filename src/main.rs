@@ -1,22 +1,13 @@
-use std::f32::MAX;
 use std::fs::File;
-use std::io::Read;
 
-use cgmath::{InnerSpace, Point3, Vector3, Zero};
-use indicatif::{ProgressBar, ProgressIterator, ProgressStyle};
-use rand::prelude::ThreadRng;
-use rand::{thread_rng, Rng};
-use rayon::prelude::*;
+use cgmath::{Point3, Vector3};
+use indicatif::{ProgressBar, ProgressStyle};
 
-use crate::camera::{Camera, CameraParameters};
-use crate::material::{Bounce, Material};
 use crate::objects::Sphere;
-use crate::ray::Ray;
 use crate::scene::Scene;
-use crate::sky::Sky;
-use crate::traits::Hittable;
 
 mod camera;
+mod config;
 mod material;
 mod objects;
 mod ray;
@@ -33,12 +24,19 @@ fn main() {
     let mut args = std::env::args().skip(1);
     let config_file = args.next().unwrap();
     let width = args.next().and_then(|p| p.parse().ok()).unwrap_or(800);
-    let height = args.next().and_then(|p| p.parse().ok()).unwrap_or_else(|| (width as f64 * 9.0 / 16.0 ) as u32);
+    let height = args
+        .next()
+        .and_then(|p| p.parse().ok())
+        .unwrap_or_else(|| (width as f64 * 9.0 / 16.0) as u32);
 
     let file = File::open(config_file).unwrap();
-    let scn: Scene<Vec<Sphere>> = serde_yaml::from_reader(file).unwrap();
+    let scn = Scene::<Vec<_>>::from(
+        serde_yaml::from_reader::<_, config::Scene<Vec<config::Object>>>(file).unwrap(),
+    )
+    .map_world(|w| w.into_iter().map(|o| o.into()).collect::<Vec<Sphere>>());
     let bar = ProgressBar::new(height as u64).with_style(
-        ProgressStyle::default_bar().template("{bar:40} [{elapsed_precise} - ETA {eta_precise}] {percent} %"),
+        ProgressStyle::default_bar()
+            .template("{bar:40} [{elapsed_precise} - ETA {eta_precise}] {percent} %"),
     );
 
     println!("P3\n{} {}\n255\n", width, height);

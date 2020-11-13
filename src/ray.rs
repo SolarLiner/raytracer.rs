@@ -1,5 +1,5 @@
 use crate::{P3, V3};
-use cgmath::{EuclideanSpace, InnerSpace, Point3, Vector3, Zero};
+use cgmath::{EuclideanSpace, InnerSpace, Point3, Vector3};
 
 #[derive(Copy, Clone, Debug, PartialEq)]
 pub struct Ray {
