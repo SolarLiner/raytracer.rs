@@ -1,10 +1,12 @@
 use cgmath::{ElementWise, Zero};
 use rand::{prelude::*, thread_rng, Rng};
 use rayon::prelude::*;
+use std::f64::*;
+
+use crate::{
+    camera::Camera, config, material::Bounce, ray::Ray, sky::Sky, traits::Hittable, Color,
+};
 use serde::{Deserialize, Serialize};
-
-
-use crate::{camera::{Camera}, material::Bounce, ray::Ray, sky::Sky, traits::Hittable, Color, config};
 
 #[derive(Clone, Debug)]
 pub struct Scene<W> {
@@ -82,7 +84,7 @@ impl<W: 'static + Hittable + Send> Scene<W> {
                     .collect();
                 tx.send(row).unwrap();
             }
-            std::mem::drop(tx);
+            drop(tx);
         });
         rx.into_iter()
     }
@@ -91,7 +93,7 @@ impl<W: 'static + Hittable + Send> Scene<W> {
         if depth == 0 {
             Color::zero()
         } else {
-            if let Some(h) = self.world.hit(&ray, 0.001, std::f64::INFINITY) {
+            if let Some(h) = self.world.hit(&ray, 0.001, INFINITY) {
                 match h.material.scatter(&ray, &h) {
                     Bounce::Bounce(color, ray) => {
                         if depth == 1 {
@@ -105,7 +107,14 @@ impl<W: 'static + Hittable + Send> Scene<W> {
                     Bounce::Stop(col) => col,
                 }
             } else {
-                self.sky.get_color(ray.dir())
+                #[cfg(not(feature = "debug_normals"))]
+                {
+                    self.sky.get_color(ray.dir())
+                }
+                #[cfg(feature = "debug_normals")]
+                {
+                    Color::zero()
+                }
             }
         }
     }

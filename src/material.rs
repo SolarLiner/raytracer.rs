@@ -9,6 +9,7 @@ use crate::{config, Color};
 
 #[derive(Copy, Clone, Debug)]
 pub enum Material {
+    Holdout { albedo: Color },
     Lambert { albedo: Color },
     Metal { albedo: Color, fuzz: f64 },
     Dielectric { transmittance: Color, ior: f64 },
@@ -37,6 +38,11 @@ impl From<config::Material> for Material {
                 transmittance: color.into(),
                 ior,
             },
+            Holdout {
+                albedo: config::ColorInput::Color { color },
+            } => Self::Holdout {
+                albedo: color.into(),
+            },
             _ => todo!(),
         }
     }
@@ -45,6 +51,11 @@ impl From<config::Material> for Material {
 impl From<Material> for config::Material {
     fn from(m: Material) -> Self {
         match m {
+            Material::Holdout { albedo } => Self::Holdout {
+                albedo: config::ColorInput::Color {
+                    color: albedo.into(),
+                },
+            },
             Material::Lambert { albedo } => Self::Lambert {
                 albedo: config::ColorInput::Color {
                     color: albedo.into(),
@@ -74,8 +85,10 @@ pub enum Bounce {
 }
 
 impl Material {
+    #[cfg(not(feature = "debug_normals"))]
     pub fn scatter(&self, ray: &Ray, hit: &HitRecord) -> Bounce {
         match *self {
+            Self::Holdout { albedo } => Bounce::Stop(albedo),
             Self::Lambert { albedo } => {
                 let mut rng = thread_rng();
                 let dir: V3 = hit.normal + random_vector(&mut rng);
@@ -110,6 +123,10 @@ impl Material {
                 Bounce::Bounce(transmittance, Ray::new(hit.point, new_dir))
             }
         }
+    }
+    #[cfg(feature = "debug_normals")]
+    pub fn scatter(&self, ray: &Ray, hit: &HitRecord) -> Bounce {
+        Bounce::Stop(V3::new(0.5, 0.5, 0.5) + 0.5 * hit.normal)
     }
 }
 

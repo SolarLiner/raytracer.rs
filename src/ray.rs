@@ -1,10 +1,19 @@
 use crate::{P3, V3};
-use cgmath::{EuclideanSpace, InnerSpace, Point3, Vector3};
+use cgmath::{EuclideanSpace, InnerSpace, Matrix4, Point3, Transform, Vector3};
 
 #[derive(Copy, Clone, Debug, PartialEq)]
 pub struct Ray {
     pos: P3,
     dir: V3,
+}
+
+impl Ray {
+    pub(crate) fn transformed(self, mat: &Matrix4<f64>) -> Ray {
+        Self {
+            pos: mat.transform_point(self.pos),
+            dir: mat.transform_vector(self.dir),
+        }
+    }
 }
 
 impl Default for Ray {

@@ -1,10 +1,9 @@
-use std::fs::File;
+use std::{fs::File, time::Instant};
 
 use cgmath::{Point3, Vector3};
 use indicatif::{ProgressBar, ProgressStyle};
 
-use crate::objects::Sphere;
-use crate::scene::Scene;
+use crate::{objects::Object, scene::Scene};
 
 mod camera;
 mod config;
@@ -12,6 +11,7 @@ mod material;
 mod objects;
 mod ray;
 mod scene;
+mod sdf;
 mod sky;
 mod traits;
 mod utils;
@@ -33,18 +33,20 @@ fn main() {
     let scn = Scene::<Vec<_>>::from(
         serde_yaml::from_reader::<_, config::Scene<Vec<config::Object>>>(file).unwrap(),
     )
-    .map_world(|w| w.into_iter().map(|o| o.into()).collect::<Vec<Sphere>>());
+    .map_world::<Vec<Object>, _>(|w| w.into_iter().map(|o| o.into()).collect());
     let bar = ProgressBar::new(height as u64).with_style(
         ProgressStyle::default_bar()
-            .template("{bar:40} [{elapsed_precise} - ETA {eta_precise}] {percent} %"),
+            .template("[{percent:>3} %] {bar:40} [{elapsed_precise} - ETA {eta_precise}]"),
     );
-
     println!("P3\n{} {}\n255\n", width, height);
+    let start = Instant::now();
     bar.inc(1);
     for row in scn.run(width, height) {
         bar.inc(1);
         row.into_iter().for_each(write_color);
     }
+    let duration = Instant::now() - start;
+    bar.finish_with_message(&format!("Duration: {:2.2} s", duration.as_secs_f32()));
 }
 
 fn write_color(col: Color) {

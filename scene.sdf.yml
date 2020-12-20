@@ -1,0 +1,36 @@
+camera:
+  pos: [ 1.0, 1.0, 1.0 ]
+  look_at: [ 0.0, 0.0, 0.0 ]
+  up: [ 0.0, 1.0, 0.0 ]
+  focus_distance: 3.0
+  aperture: 0.0
+  fov: 40.0
+bounces: 5
+samples: 10
+world:
+  - type: SDF
+    pos: [ 0.0, 0.0,0.0 ]
+    material:
+      type: Holdout
+      albedo:
+        color: [ 1.0, 0.0, 1.0 ]
+    sdf:
+      type: Plane
+      normal: [ 0.0, 1.0, 0.0 ]
+  - type: SDF
+    pos: [ 0.0, 0.5, 0.0 ]
+    material:
+      type: Lambert
+      albedo:
+        color: [ 0.1, 0.5, 1.0 ]
+    sdf:
+      type: Union
+      smooth: 0.5
+      left:
+        type: Sphere
+        pos: [ 0.0, 0.8, 0.0 ]
+        radius: 0.5
+      right:
+        type: Box
+        pos: [ 0.0, 0.0, 0.0 ]
+        size: [ 0.25, 0.25, 0.25 ]

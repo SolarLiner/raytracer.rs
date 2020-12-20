@@ -2,7 +2,7 @@
 <project version="4">
   <component name="ProjectModuleManager">
     <modules>
-      <module fileurl="file://$PROJECT_DIR$/.idea/raytracer-rs.iml" filepath="$PROJECT_DIR$/.idea/raytracer-rs.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/raytracer.rs.iml" filepath="$PROJECT_DIR$/.idea/raytracer.rs.iml" />
     </modules>
   </component>
 </project>
